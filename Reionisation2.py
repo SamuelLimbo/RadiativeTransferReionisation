@@ -47,7 +47,9 @@ class Calculation():
         self.sigma = sigma
         self.c     = c
 
-        self.HydroFraction = [[]]
+        self.HydroFraction   = [[]]
+        self.TotalIonisation = []
+        self.NbIonisedCells  = []
 
         for i in range(NbIterations): #Creates as many locations to store the data from the "Nb" cells for the "NbIterations" iterations
             if i == 0:
@@ -125,6 +127,7 @@ class Calculation():
         for i in root:
             if i > 0 and i < 1:
                 self.HydroFraction[time + 1][cell] = i #New fraction value added to the list
+                
 
     def ChemistrySolution(self, N_advective, F_advective, Time, Cell):
         self.ThirdOrderPoly(N_advective, Time, Cell)
@@ -135,6 +138,18 @@ class Calculation():
         F = F_advective / (1 + self.c*self.sigma*self.rho*self.dt*(1 - CurrentX))
 
         return N, F
+        
+    def SumIonisation(self):
+        for i in range(len(self.HydroFraction)):
+            self.TotalIonisation.append(sum(self.HydroFraction[i]))
+            count = 0
+            for j in range(Nb):
+                if self.HydroFraction[i][j] >= 0.9:
+                    count += 1
+                    
+            self.NbIonisedCells.append(count/Nb)
+            
+        return self.TotalIonisation, self.NbIonisedCells
 
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -170,7 +185,7 @@ class Chemistry():
 
 class StellarSources():
     #Constructor::____________________________________________________________________________________________________
-    def __init__(self, Chemistry):
+    def __init__(self, Chemistry, T):
         #Let's take an example of how self.N, self.P and self.F will be defined (see Initialise method below)::
         #self.N[0][1] will contain the information about the number density of photons in the cell 1 at time dt = 0 (0th time iteration)
         self.N = [] #Values of the photons number density
@@ -190,10 +205,13 @@ class StellarSources():
 
         self.Chem     = Chemistry
         self.Fraction = []
+        self.SumFract = []
+        
+        self.T = T
 
     #Getter::_________________________________________________________________________________________________________
     def Get_Data(self):
-        return self.N, self.Fraction
+        return self.N, self.Fraction, self.SumFract
 
     #Methods::________________________________________________________________________________________________________
     def PulseSource(self): #Initial condition on the source, 1 photon emitted at 0th iteration from the cell 0
@@ -203,7 +221,7 @@ class StellarSources():
     def ContinuousSource(self): #Initial condition on the source, 1 photon emitted at 0th iteration from the cell 0
         #Initial conditions::
         for Time in range(NbIterations):
-            self.N[Time][int(Nb/2)] = 100
+            self.N[Time][int(Nb/2)] = 10
 
     def DoubleSource(self): #Initial condition on the source, 1 photon emitted at 0th iteration from the cell 0
         #Initial conditions::
@@ -231,7 +249,7 @@ class StellarSources():
             self.SourcePacket()
 
         #Calculations using the methods from the "Integation" class::
-        A = Calculation(self.FHalf, self.PHalf, self.N, self.P, self.F, T, rho, dt, sigma, c, x, self.Chem) #Creates an object A to integrate
+        A = Calculation(self.FHalf, self.PHalf, self.N, self.P, self.F, self.T, rho, dt, sigma, c, x, self.Chem) #Creates an object A to integrate
 
         for Time in range(NbIterations):
             for Cell in range(Nb):
@@ -240,6 +258,8 @@ class StellarSources():
                 A.NFP(Cell, Time)
 
         self.Fraction = A.Get_HydroFraction()
+        self.SumFract = A.SumIonisation()[0]
+       
 
 
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -294,6 +314,12 @@ class Plot():
             #plt.xlabel('Time', fontname = 'Serif', size = 11)
             #plt.ylabel('Value of N in the 0th cell', fontname = 'Serif', size = 11)
             plt.show()
+            
+    def Fraction(self, X, Y, T):
+        for i in range(5):
+           plt.plot(X, Y[i], label=str(T[i]) + "K")
+        plt.legend()   
+        plt.show()
 
     def Animation(self): #Animates the evolution of the density as a function of time
     	#for i in range(NbIterations - 5):
@@ -338,21 +364,31 @@ class Plot():
 print(3*c*dt/dx)
 if 3*c*dt/dx < 1:
     print("The courant condition is respected, the program can proceed.")
-    StelObj1 = StellarSources(0) #Without chemistry
-    StelObj1.SelectSource(2)
-    Y1       = StelObj1.Get_Data()[1] #0 for N and 1 for fraction
-    StelObj2 = StellarSources(1) #With chemistry
-    StelObj2.SelectSource(1)
-    Y2       = StelObj2.Get_Data()[0]
+    #StelObj1 = StellarSources(1) #Without chemistry
+    #StelObj1.SelectSource(2)
+    #Y1       = StelObj1.Get_Data()[1] #0 for N and 1 for fraction
+    #StelObj2 = StellarSources(1) #With chemistry
+    #StelObj2.SelectSource(1)
+    #Y2       = StelObj2.Get_Data()[0]
 
-    PlotObj = Plot(Y1, 0)
-    PlotObj.Animation()
+    #PlotObj = Plot(Y1, 0)
+    #PlotObj.Animation()
     #PlotObj.AllGraphsInARow()
+    
+    T = [1000, 4000, 8000, 15000, 21000]
+    X = np.linspace(0, t, NbIterations)
+    Y = []
+    for i in range(len(T)):
+        StelObj = StellarSources(1, T[i])
+        StelObj.SelectSource(2)
+        Y.append(StelObj.Get_Data()[2])
+
+    PlotObj = Plot(Y, 0)
+    PlotObj.Fraction(X, Y, T)
+    
 else:
     print("The courant condition is not respected, please try other values.\nPlease try to enter other initial conditions.")
 
 
-
-#Solar wind and the wave part (with the linearisation)
 
 #Limbo
