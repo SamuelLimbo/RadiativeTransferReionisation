@@ -11,7 +11,7 @@ Nb = 111 #Number of cells
 dx = 1.9285E19 #Length of each cell
 L  = Nb * dx #Length of the simulation
 dt = 1E8 #Time step in sec
-t  = 99E10 #Total time in sec
+t  = 99E9 #Total time in sec
 NbIterations = int(t/dt) #Number of time iterations
 c  = 3E10 #Speed of light
 
@@ -377,16 +377,16 @@ class Plot():
 #So we need:: N[0] = 0 ; P[0] = 0 ; F[0] = 0
 
 if c*dt/dx < 1:
-    print(f"\nThe courant condition is respected, its value is {round(3*c*dt/dx, 3)}.\n \n")
-    print("1. Advective solution only\n 2. Chemistry added to the advective solution\n 3. Both solutions\n 4. The hydrogen fraction in each cell\n 5. Evolution of the different quantities\n 6. Temperature coupling (beta)\n ")
+    print(f"\nThe courant condition is respected, its value is {round(3*c*dt/dx, 3)}.\n ")
+    print("\n 1. Advective solution only\n 2. Chemistry added to the advective solution\n 3. Both solutions\n 4. The hydrogen fraction in each cell\n 5. Evolution of the different quantities\n 6. Temperature coupling (beta)")
     Condition = 0
     while Condition == 0:
         ChoiceStr = input("Choose one of the previous options:: ")
         ChoiceInt = int(ChoiceStr)
-        if SourceInt >=1 and SourceInt <=6:
+        if ChoiceInt >=1 and ChoiceInt <=6:
             Condition =1
 
-    print("1. Pulse Source\n 2. Continuous Source\n 3. Double Source\n 4. Source Packet\n")
+    print("\n 1. Pulse Source\n 2. Continuous Source\n 3. Double Source\n 4. Source Packet")
     Condition = 0
     while Condition == 0:
         SourceStr = input("Choose one of the sources:: ")
@@ -437,13 +437,13 @@ if c*dt/dx < 1:
 
     if ChoiceInt == 5:
         Frac = []
-        print("\n Which parameter would you like to see vary?")
-        print("1. The temperature\n 2. The hydrogen density of the medium\n 3. The number of photons emitted by the source\n")
+        print("\nWhich parameter would you like to see vary?")
+        print("\n 1. The temperature\n 2. The hydrogen density of the medium\n 3. The number of photons emitted by the source")
         Condition = 0
         while Condition == 0:
             SelectStr = input("Choose one of these options:: ")
             SelectInt = int(SelectStr)
-            if SelectStr >=1 and SelectStr <=3:
+            if SelectInt >=1 and SelectInt <=3:
                 Condition =1
 
         if SelectInt == 1:
@@ -456,7 +456,7 @@ if c*dt/dx < 1:
                     Frac[i].append(np.mean(Y1[I]))
 
             PlotObj = Plot(Y1, 0)
-            PlotObj.PlotDiff(Frac, Nsour, "K")
+            PlotObj.PlotDiff(Frac, T, "K")
 
         if SelectInt == 2:
             for i in range(len(rho)):
@@ -468,7 +468,7 @@ if c*dt/dx < 1:
                     Frac[i].append(np.mean(Y1[I]))
 
             PlotObj = Plot(Y1, 0)
-            PlotObj.PlotDiff(Frac, Nsour, "cm$^{-3}$")
+            PlotObj.PlotDiff(Frac, rho, "cm$^{-3}$")
 
         if SelectInt == 3:
             for i in range(len(NSour)):
@@ -480,7 +480,7 @@ if c*dt/dx < 1:
                     Frac[i].append(np.mean(Y1[I]))
 
             PlotObj = Plot(Y1, 0)
-            PlotObj.PlotDiff(Frac, Nsour, "s$^{-1}$.cm$^{-3}$")
+            PlotObj.PlotDiff(Frac, NSour, "s$^{-1}$.cm$^{-3}$")
 
     if ChoiceInt == 6:
         StelObj1 = StellarSources(1, 1, T[1], rho[2], NSour[2])
